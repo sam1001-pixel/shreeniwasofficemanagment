@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate",
     "start": "next start",
     "test": "vitest run"
   },
@@ -21,7 +22,7 @@
     "exceljs": "^4.4.0",
     "jose": "^5.9.3",
     "lucide-react": "^0.446.0",
-    "next": "^14.2.15",
+    "next": "^14.2.35",
     "node-cron": "^3.0.3",
     "postcss": "^8.4.47",
     "prisma": "^5.20.0",
