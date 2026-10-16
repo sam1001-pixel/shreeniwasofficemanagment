@@ -1,0 +1,100 @@
+# Progress Log
+
+## Codebase Patterns
+- **Database Access**: Relational SQLite database with WAL mode and PRAGMA foreign_keys = ON via Prisma ORM for zero external daemon dependency, complete transaction safety, and instant point-in-time backup portability.
+- **Client Google Form Integration**: Live inspected form title is "Shree Niwas Properties & Rentals Property Visit Record". All 13 fields (including Hindi labels and dropdown options with "Other" write-in support) are mapped to database model `ClientFormSubmission`.
+- **Daily Update Report**: 9 mandatory English fields preserved verbatim: `Post on Insta`, `Website`, `Visit Pass`, `YouTube Post`, `CHARA`, `VISIT`, `Bhole Shankar Lal Bagh`, `New Property`, `Other Important Updates`. Versioned via `DailyUpdateRevision`.
+- **Financial Integrity**: Monetary values handled with 2 decimal places. Soft reversals/adjustments instead of hard deletes on approved transactions. Dynamic "Other" category supported.
+- **Excel Automation**: ExcelJS library used server-side with formula injection sanitation (prefixing `=`, `+`, `-`, `@` with single quote `'`).
+
+---
+
+### [Phase A Audit Complete]
+- Workspace inspected: `/Users/macbook/Desktop/office managment system ` was initially empty. No legacy migration risks or database resets needed.
+- Live Google Form `https://forms.gle/sAEecgiXV8JbuTQX9` parsed and extracted. 13 distinct fields identified.
+- Client questions and open requirements documented.
+- Target architecture and phased roadmap defined.
+
+### [Phase B Architecture & Schema Complete]
+- Next.js 14+ fullstack TypeScript project scaffolded.
+- Normalized Prisma relational schema created with 18 distinct models (User, Role, Employee, Attendance, LeaveRequest, Property, PropertyOwner, CustomerLead, SiteVisit, ClientFormSubmission, DailyUpdateReport, DailyUpdateRevision, FinancialTransaction, ExcelReportJob, AuditLog, SystemNotification, BackupRecord, SystemSetting).
+- SQLite configured with WAL mode (`PRAGMA journal_mode = WAL`) and foreign key constraints (`PRAGMA foreign_keys = ON`).
+- Database seeded with 5 core roles, granular permissions, 7 active staff/agent users (including Priyanka, Suman, Tammana), and default company settings.
+- Verification script executed and confirmed all 7 users, roles, and initial properties exist.
+
+### [Phase C Authentication & RBAC Complete]
+- NextAuth/Jose session authentication engine implemented with 24h JWT token signing, HTTP-only cookie distribution, and route guard middleware (`src/middleware.ts`).
+- Bcrypt password hashing and verification with round 10 work factor.
+- Granular permission checking helper `hasPermission()` with wildcards for `SUPER_ADMIN`.
+- Immutable audit logging helper `logAuditAction()` writing to `AuditLog` table with IP, action, entity, and diff metadata.
+- Automated Vitest test suite (`tests/auth.test.ts`) executed and verified: password hashing, valid/invalid token handling, role-based permission checks, and database audit log persistence. All 5 tests passed.
+
+### [Phase D Employee & Attendance Engine Complete]
+- Employee Management module built with unique auto-generated codes (`EMP-00X`), role credentials provisioning, soft-archive deletion preserving historical payroll & attendance records, and RBAC salary masking.
+- Attendance Engine created with automatic working-hour calculation, late arrival minutes with configurable grace period, and duplicate record prevention on `[employeeId, date]`.
+- Monthly Attendance Calculator engine (`src/lib/attendanceCalculator.ts`) built to accurately determine: calendar days, scheduled working days, days present, half-days, paid/unpaid leaves, weekly offs, holidays, late arrivals, attendance %, and payable days according to real estate company policy.
+- Leave request management API with manager approval workflow and audit trails.
+- Automated Vitest test suite (`tests/attendance.test.ts`) executed and verified: on-time/grace/late calculations, April 2026 monthly attendance metric calculations, unique date constraint enforcement, and manual correction audit tracking. All 4 tests passed.
+
+### [Phase E Client Form & Financial Ledger Complete]
+- Client Google Form (Shree Niwas Properties & Rentals Property Visit Record) recreated across API and database with all 13 fields (including Hindi options and custom write-in options).
+- Duplicate visit submission prevention on `[clientMobile, propertyLocation, visitDate, visitTime]` implemented.
+- Financial Transaction engine built supporting all core categories (Property Income/Expense, Staff Payments, Vendor Payments, Maintenance, Travel, Office Expenses) plus dynamic custom "Other" category.
+- Financial safeguards implemented: positive amount validation, approval workflows, duplicate transaction warnings, and audited transaction reversals (prohibiting permanent deletion of approved records).
+- Automated Vitest test suite (`tests/clientFormAndFinance.test.ts`) executed and verified: 13-field submission persistence, custom "Other" categories, audited reversals with reason tracking, and mathematical P&L ledger calculations. All 4 tests passed.
+
+### [Phase F Daily Update Report Module Complete]
+- Dedicated Daily Update Report API and data models implemented with all 9 exact fields:
+  1. `Post on Insta`
+  2. `Website`
+  3. `Visit Pass`
+  4. `YouTube Post`
+  5. `CHARA` (Exact client label preserved verbatim)
+  6. `VISIT`
+  7. `Bhole Shankar Lal Bagh`
+  8. `New Property`
+  9. `Other Important Updates`
+- Workflows implemented: Save Draft, Submit Report, Edit Report with mandatory reason justification, and immutable revision snapshotting (`DailyUpdateRevision`).
+- Uniqueness on `[submittedById, reportDate]` enforced to prevent accidental duplicate submissions while permitting audited edits.
+- Summary dashboard metrics implemented for today's submissions, pending staff reports, and drafts.
+- Automated Vitest test suite (`tests/dailyUpdates.test.ts`) executed and verified: draft creation, 9-field submission, duplicate blocking, and revision history snapshotting with reasons. All 4 tests passed.
+
+### [Phase G Property, Lead CRM & Site Visits Complete]
+- Property management module built supporting residential/commercial units, owner profiles, agent assignments, pricing, and soft-archive state transitions without deleting historical visit or financial records.
+- Customer & Lead CRM created with lead source attribution (Instagram, Website, Referral, WalkIn, Direct), property preference parameters (budget, type, location), and pipeline tracking.
+- Site visit coordination engine linking Prospective Leads, Properties, and Property Agents.
+- Automated Vitest test suite (`tests/propertyAndLeads.test.ts`) executed and verified: property creation, soft-archiving preservation, lead creation, and end-to-end site visit scheduling through to deal closure. All 3 tests passed.
+
+### [Phase H Automatic Excel Reporting Engine Complete]
+- Centralized server-side XLSX automation engine (`src/lib/excelGenerator.ts`) built using `exceljs`.
+- Security safeguard implemented: CWE-1236 Formula Injection sanitization automatically neutralizes any cell strings starting with `=`, `+`, `-`, or `@`.
+- Daily Update Report worksheet implemented with exact 15 columns matching specifications (`Report ID | Report Date | Submitted By | Post on Insta | Website | Visit Pass | YouTube Post | CHARA | VISIT | Bhole Shankar Lal Bagh | New Property | Other Important Updates | Status | Submitted At | Last Modified`).
+- Monthly Attendance workbook generated with complete calculated metrics (scheduled working days, present, half-days, leaves, weekly offs, holidays, late count, total working hours, attendance percentage, and payable days).
+- Financial Transactions Ledger generated with category, custom 'Other' category, payment methods, and approval statuses.
+- Downloadable export API endpoint (`/api/reports/export`) built with role-based permission verification and `ExcelReportJob` logging.
+- Automated Vitest test suite (`tests/excelAutomation.test.ts`) executed and verified: formula injection neutralization, Daily Update workbook structure, Attendance summary metrics, and Financial ledger export. All 4 tests passed.
+
+### [Phase I Backups, Restoration Testing & Notifications Complete]
+- Automated database backup engine (`src/lib/backup.ts`) created: flushes SQLite WAL log checkpoints, generates timestamped database replicas into `backups/`, computes cryptographic SHA-256 checksums, and logs status in `BackupRecord`.
+- Proven Restoration Testing: `verifyAndTestRestore()` automatically attaches to an isolated test SQLite replica, queries all essential business entities (Users, Roles, Employees, SystemSettings), and confirms data recovery is intact before setting status to `Verified`.
+- Proactive Operational Notifications engine (`src/lib/notifications.ts`) and API routes built to scan for pending daily updates, pending payment approvals, and scheduled site visits.
+- Automated Vitest test suite (`tests/backupAndRestore.test.ts`) executed and verified: database snapshot generation, SHA-256 checksum integrity, sandbox restoration verification, and system notifications lifecycle. All 3 tests passed.
+
+### [Phase J Security Verification & Comprehensive Test Suite Complete]
+- End-to-end security and functional test suite (`tests/e2eSecurityAndFunctional.test.ts`) created with 8 comprehensive security tests.
+- IDOR access controls verified across all REST endpoints (employees, properties, attendance, daily updates, finance).
+- Negative amount validation and numeric boundary defenses verified on financial transactions.
+- Soft-archive isolation and historical transaction immutability verified.
+- Excel formula injection defense (CWE-1236) verified against harmful prefixes (`=CMD|' /C calc'!A0`, `+`, `-`, `@`).
+- WORM compliance audit trail verification confirmed every administrative modification records an immutable log with old/new states.
+- Complete Vitest test suite executed: **8 test suites, 35 passed, 0 failed**.
+
+### [Phase K Production Deployment & Documentation Complete]
+- Next.js 14 production build compiled with exit code 0; all 32 static and dynamic routes successfully generated.
+- Production documentation suite created:
+  1. `README.md`: Architecture overview, prerequisites, complete role matrix, default credentials, setup commands, and API directory.
+  2. `ADMIN_GUIDE.md`: Standard operating procedures for all 5 roles (Super Admin, Office Manager, Accountant, Employee, Property Manager), covering attendance, daily updates, client visits, and financial approvals.
+  3. `BACKUP_RESTORE.md`: Disaster recovery procedures, cryptographic SHA-256 checksum verification, automated sandbox restore testing, and emergency rollback runbooks.
+  4. `.env.example`: Safe configuration template with hardened JWT secrets and database configuration.
+- Entire system verified end-to-end with real database transactions, zero mock data, and full role-based dashboard UI.
+

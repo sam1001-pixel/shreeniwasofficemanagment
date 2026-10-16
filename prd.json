@@ -1,0 +1,183 @@
+{
+  "project": "Real Estate Office Management System",
+  "branchName": "main",
+  "description": "Enterprise-grade Office Management System for Shree Niwas Properties & Rentals",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Phase A - Project Audit & Form Verification",
+      "description": "As a system architect, I want to inspect the workspace, runtime environment, and client Google Form so that target architecture and database requirements are verified.",
+      "acceptanceCriteria": [
+        "Inspect workspace directory and identify existing assets or absence thereof",
+        "Verify node/npm runtime availability",
+        "Extract live questions, types, and constraints from client Google Form (https://forms.gle/sAEecgiXV8JbuTQX9)",
+        "Produce detailed PRD and Implementation Plan with open questions for client",
+        "Typecheck passes",
+        "CodeRabbit review passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Workspace is empty. Form was fetched live and all 13 fields with validation rules extracted."
+    },
+    {
+      "id": "US-002",
+      "title": "Phase B - Target Architecture & Relational Schema",
+      "description": "As a database engineer, I want to design normalized database models for users, roles, employees, attendance, properties, leads, transactions, client form submissions, and daily update reports.",
+      "acceptanceCriteria": [
+        "Design schema with primary/foreign keys, indexes, and audit trails",
+        "Setup Next.js 14+ project scaffold with TypeScript, Tailwind CSS, Lucide icons, and Prisma ORM",
+        "Configure SQLite with WAL mode and foreign key enforcement",
+        "Typecheck passes",
+        "Tests pass",
+        "CodeRabbit review passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Prisma schema normalized, SQLite WAL enabled, 5 core roles seeded, and initial users created."
+    },
+    {
+      "id": "US-003",
+      "title": "Phase C - Authentication, RBAC & Persistent Storage",
+      "description": "As a user, I want secure authentication with role-based access control so that sensitive office modules are restricted to authorized personnel.",
+      "acceptanceCriteria": [
+        "Implement 5 roles: Super Admin, Office Manager, Accountant, Employee, Property Manager",
+        "Password hashing with bcryptjs and secure session handling",
+        "Middleware route guards protecting APIs and pages",
+        "Audit log table and helper to record critical actions",
+        "Typecheck passes",
+        "Tests pass",
+        "CodeRabbit review passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Bcrypt password hashing, 24h JWT session signing/verification via jose, cookie session handler, route guards, and immutable audit logs verified by automated test suite."
+    },
+    {
+      "id": "US-004",
+      "title": "Phase D - Employee Directory & Daily Attendance Engine",
+      "description": "As an office administrator, I want to manage employee profiles and track daily attendance with automatic monthly working day/payable calculations.",
+      "acceptanceCriteria": [
+        "Employee CRUD with unique ID, job title, status, and salary config",
+        "Check-in, check-out, status tagging (present, absent, half-day, leave, holiday)",
+        "Automated monthly attendance summary calculator",
+        "Typecheck passes",
+        "Tests pass",
+        "CodeRabbit review passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "Employee directory CRUD with salary authorization masking, soft-archive preservation, attendance check-in/out working-hour and late-grace calculations, monthly summary engine, and unique date duplicate blocking verified by automated tests."
+    },
+    {
+      "id": "US-005",
+      "title": "Phase E - Client Google Form & Financial Payments (Other category)",
+      "description": "As an agent or accountant, I want to record property visits matching the client Google Form and manage financial income/expense transactions including custom 'Other' categories.",
+      "acceptanceCriteria": [
+        "Implement 13-field Shree Niwas Property Visit Record with exact options",
+        "Income/Expense ledger supporting all standard categories and dynamic 'Other' category",
+        "Strict decimal validation and reversal workflow instead of hard deletion",
+        "Typecheck passes",
+        "Tests pass",
+        "CodeRabbit review passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "Client Google Form recreated with all 13 fields, duplicate prevention, and revision tracking. Financial ledger implemented with dynamic 'Other' category, approval/reversal workflow, and mathematical ledger totals verified by automated tests."
+    },
+    {
+      "id": "US-006",
+      "title": "Phase F - Daily Update Report Module (9 fields & revisions)",
+      "description": "As office staff, I want to submit daily updates across 9 required fields with draft support and revision history.",
+      "acceptanceCriteria": [
+        "Exact 9 fields: Post on Insta, Website, Visit Pass, YouTube Post, CHARA, VISIT, Bhole Shankar Lal Bagh, New Property, Other Important Updates",
+        "Draft saving and submission with duplicate prevention for employee/date",
+        "Versioned revision history with change reason logging",
+        "Daily update overview dashboard with category filters",
+        "Typecheck passes",
+        "Tests pass",
+        "CodeRabbit review passes"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "Daily Update Report module with all 9 exact fields (Post on Insta, Website, Visit Pass, YouTube Post, CHARA, VISIT, Bhole Shankar Lal Bagh, New Property, Other Important Updates), draft saving, duplicate blocking, and revision history snapshotting verified by automated tests."
+    },
+    {
+      "id": "US-007",
+      "title": "Phase G - Property Portfolio, Leads & Site Visits CRM",
+      "description": "As a property manager, I want to manage properties, prospective leads, and scheduled site visits in an integrated CRM.",
+      "acceptanceCriteria": [
+        "Property listing CRUD with status, price/rent, assigned agent, owner information",
+        "Customer/Lead tracking pipeline with follow-up reminders and visit linkages",
+        "Typecheck passes",
+        "Tests pass",
+        "CodeRabbit review passes"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": "Property listings CRUD with owner and agent linkage, soft-archiving without historical deletion, lead CRM pipeline, and site visit scheduling verified by automated tests."
+    },
+    {
+      "id": "US-008",
+      "title": "Phase H - Automated Excel Reporting Engine",
+      "description": "As an administrator, I want to download styled Excel files for attendance, daily reports, properties, and finance with formula injection protections.",
+      "acceptanceCriteria": [
+        "ExcelJS generator with styled headers, frozen panes, and sanitized formulas",
+        "Daily update report worksheet matching exact 9-column format",
+        "Monthly consolidated attendance and financial P&L sheets",
+        "Typecheck passes",
+        "Tests pass",
+        "CodeRabbit review passes"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": "Excel automation engine built with ExcelJS, formula injection sanitization, exact 9-field daily update worksheet, monthly attendance calculation worksheet, financial ledger workbook, and authenticated download API verified by automated tests."
+    },
+    {
+      "id": "US-009",
+      "title": "Phase I - Backups, Restoration Testing & Notifications",
+      "description": "As a system administrator, I want automated database backups, proven restoration verification, and alert notifications.",
+      "acceptanceCriteria": [
+        "Automated encrypted/timestamped database backup script",
+        "Verified restore test script proving data integrity",
+        "In-app notification system for pending reports, follow-ups, and approvals",
+        "Typecheck passes",
+        "Tests pass",
+        "CodeRabbit review passes"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": "Automated point-in-time SQLite backup engine, SHA-256 checksum tracking, sandbox restoration test verification, and system notifications engine verified by automated tests."
+    },
+    {
+      "id": "US-010",
+      "title": "Phase J - Security Verification & Comprehensive Test Suite",
+      "description": "As a QA engineer, I want automated unit and integration tests across all modules and security audits for OWASP Top 10 vulnerabilities.",
+      "acceptanceCriteria": [
+        "Automated test suite covering auth, calculations, form validations, and Excel exports",
+        "IDOR vulnerability checks verifying unauthorized access is blocked",
+        "Typecheck passes",
+        "Tests pass",
+        "CodeRabbit review passes"
+      ],
+      "priority": 10,
+      "passes": true,
+      "notes": "35 automated tests across 8 test suites passing. Comprehensive E2E security suite covers IDOR checks, negative amount defenses, XSS sanitization, Excel CWE-1236 injection prevention, and WORM audit trails."
+    },
+    {
+      "id": "US-011",
+      "title": "Phase K - Production Deployment & Documentation",
+      "description": "As a DevOps engineer, I want complete documentation, environment configuration, and deployment guides.",
+      "acceptanceCriteria": [
+        "Deliver complete source code, README.md, ADMIN_GUIDE.md, and BACKUP_RESTORE.md",
+        "Deliver .env.example with secure default keys",
+        "Verify clean production build",
+        "Typecheck passes",
+        "Tests pass",
+        "CodeRabbit review passes"
+      ],
+      "priority": 11,
+      "passes": true,
+      "notes": "Production build passed compiling 32 routes. Comprehensive documentation provided: README.md, ADMIN_GUIDE.md, BACKUP_RESTORE.md, .env.example, and seeded production-ready database."
+    }
+  ]
+}

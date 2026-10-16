@@ -1,0 +1,371 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id                    String                 @id @default(cuid())
+  email                 String                 @unique
+  username              String                 @unique
+  passwordHash          String
+  name                  String
+  roleId                String
+  status                String                 @default("Active") // Active, Inactive, Suspended
+  role                  Role                   @relation(fields: [roleId], references: [id])
+  employee              Employee?
+  dailyUpdateReports    DailyUpdateReport[]
+  createdTransactions   FinancialTransaction[] @relation("CreatedTransactions")
+  approvedTransactions  FinancialTransaction[] @relation("ApprovedTransactions")
+  auditLogs             AuditLog[]
+  notifications         SystemNotification[]
+  clientSubmissions     ClientFormSubmission[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  @@index([roleId])
+  @@index([status])
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique // SUPER_ADMIN, OFFICE_MANAGER, ACCOUNTANT, EMPLOYEE, PROPERTY_MANAGER
+  description String
+  permissions String   // JSON array of permission strings
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Employee {
+  id               String                 @id @default(cuid())
+  employeeCode     String                 @unique
+  userId           String?                @unique
+  user             User?                  @relation(fields: [userId], references: [id])
+  firstName        String
+  lastName         String
+  email            String                 @unique
+  phone            String
+  designation      String
+  department       String
+  joiningDate      String                 // YYYY-MM-DD
+  status           String                 @default("Active") // Active, Inactive, Archived
+  salary           Float?
+  emergencyContact String?
+  managerId        String?
+  manager          Employee?              @relation("ManagerSubordinates", fields: [managerId], references: [id])
+  subordinates     Employee[]             @relation("ManagerSubordinates")
+  attendances      Attendance[]
+  leaveRequests    LeaveRequest[]
+  assignedProperties Property[]
+  assignedLeads    CustomerLead[]
+  transactions     FinancialTransaction[]
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  @@index([status])
+  @@index([department])
+}
+
+model Attendance {
+  id                 String    @id @default(cuid())
+  employeeId         String
+  employee           Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date               String    // YYYY-MM-DD
+  checkInTime        String?   // HH:MM:SS
+  checkOutTime       String?   // HH:MM:SS
+  status             String    @default("Present") // Present, Absent, HalfDay, Leave, WeeklyOff, Holiday
+  workingMinutes     Int       @default(0)
+  lateMinutes        Int       @default(0)
+  isManualCorrection Boolean   @default(false)
+  correctionReason   String?
+  correctedById      String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@unique([employeeId, date])
+  @@index([date])
+  @@index([status])
+}
+
+model LeaveRequest {
+  id            String    @id @default(cuid())
+  employeeId    String
+  employee      Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveType     String    // Paid, Unpaid, Sick, Casual
+  startDate     String    // YYYY-MM-DD
+  endDate       String    // YYYY-MM-DD
+  totalDays     Float     @default(1)
+  reason        String
+  status        String    @default("Pending") // Pending, Approved, Rejected
+  approvedById  String?
+  approvalNotes String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([employeeId])
+  @@index([status])
+}
+
+model PropertyOwner {
+  id         String     @id @default(cuid())
+  name       String
+  phone      String
+  email      String?
+  address    String?
+  notes      String?
+  properties Property[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+model Property {
+  id              String                 @id @default(cuid())
+  propertyCode    String                 @unique
+  title           String
+  description     String?
+  propertyType    String                 // Apartment, Villa, Plot, Commercial, Office
+  listingType     String                 // Sale, Rent, Lease
+  price           Float?
+  askingRent      Float?
+  address         String
+  locality        String
+  city            String                 @default("New Delhi")
+  areaSize        Float
+  areaUnit        String                 @default("SqFt") // SqFt, SqYd, Gaj, Acre
+  status          String                 @default("Available") // Available, UnderDeal, Sold, Rented, Archived
+  assignedAgentId String?
+  assignedAgent   Employee?              @relation(fields: [assignedAgentId], references: [id])
+  ownerId         String?
+  owner           PropertyOwner?         @relation(fields: [ownerId], references: [id])
+  siteVisits      SiteVisit[]
+  transactions    FinancialTransaction[]
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  @@index([status])
+  @@index([propertyType])
+  @@index([listingType])
+}
+
+model CustomerLead {
+  id                 String                 @id @default(cuid())
+  leadCode           String                 @unique
+  name               String
+  phone              String
+  email              String?
+  source             String                 @default("Direct") // Instagram, Website, Referral, WalkIn, Direct
+  status             String                 @default("New") // New, Contacted, SiteVisitScheduled, Negotiation, Won, Lost
+  preferredType      String?
+  budgetMin          Float?
+  budgetMax          Float?
+  preferredLocation  String?
+  assignedEmployeeId String?
+  assignedEmployee   Employee?              @relation(fields: [assignedEmployeeId], references: [id])
+  siteVisits         SiteVisit[]
+  transactions       FinancialTransaction[]
+  notes              String?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  @@index([status])
+  @@index([phone])
+}
+
+model SiteVisit {
+  id            String       @id @default(cuid())
+  leadId        String
+  lead          CustomerLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  propertyId    String
+  property      Property     @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  agentId       String?
+  scheduledDate String       // YYYY-MM-DD
+  scheduledTime String?      // HH:MM
+  visitNumber   Int          @default(1)
+  outcome       String?      // Liked, Considering, Disliked
+  feedbackNotes String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([leadId])
+  @@index([propertyId])
+}
+
+model ClientFormSubmission {
+  id                  String   @id @default(cuid())
+  submissionCode      String   @unique
+  clientName          String
+  clientMobile        String
+  propertyOwnerName   String
+  propertyLocation    String
+  visitDate           String   // YYYY-MM-DD
+  visitTime           String   // HH:MM
+  visitConductedBy    String   // Priyanka, Suman, Tammana, custom
+  visitCharge         String   // ₹500, ₹1,000, custom
+  paymentStatus       String   // Paid, Not paid, Partial, custom
+  propertyRating      String   // ❤️ पसंद आई, 🤔 सोचकर बताएगा, ❌ पसंद नहीं आई, custom
+  followUpRemark      String
+  visitNumber         String   // 1, 2, 3, 4, 5, custom
+  propertyOwnerMobile String
+  submittedById       String?
+  submittedBy         User?    @relation(fields: [submittedById], references: [id])
+  revisionCount       Int      @default(1)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([visitDate])
+  @@index([clientMobile])
+}
+
+model DailyUpdateReport {
+  id                    String                 @id @default(cuid())
+  reportCode            String                 @unique // DUR-YYYYMMDD-XXXX
+  reportDate            String                 // YYYY-MM-DD
+  submittedById         String
+  submittedBy           User                   @relation(fields: [submittedById], references: [id])
+  status                String                 @default("Submitted") // Draft, Submitted
+  postOnInsta           String                 @default("")
+  website               String                 @default("")
+  visitPass             String                 @default("")
+  youTubePost           String                 @default("")
+  chara                 String                 @default("") // Exact field label CHARA preserved
+  visit                 String                 @default("")
+  bholeShankarLalBagh   String                 @default("")
+  newProperty           String                 @default("")
+  otherImportantUpdates String                 @default("")
+  revisionNumber        Int                    @default(1)
+  submittedAt           DateTime?
+  revisions             DailyUpdateRevision[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  @@unique([submittedById, reportDate])
+  @@index([reportDate])
+  @@index([status])
+}
+
+model DailyUpdateRevision {
+  id                    String            @id @default(cuid())
+  reportId              String
+  report                DailyUpdateReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  revisionNumber        Int
+  modifiedById          String
+  postOnInsta           String
+  website               String
+  visitPass             String
+  youTubePost           String
+  chara                 String
+  visit                 String
+  bholeShankarLalBagh   String
+  newProperty           String
+  otherImportantUpdates String
+  changeReason          String
+  createdAt             DateTime          @default(now())
+
+  @@index([reportId])
+}
+
+model FinancialTransaction {
+  id                String        @id @default(cuid())
+  transactionCode   String        @unique // TXN-YYYYMMDD-XXXX
+  date              String        // YYYY-MM-DD
+  type              String        // Income, Expense
+  category          String        // Property Income, Property Expense, Employee Payment, Office Expense, Vendor Payment, Customer Payment, Maintenance, Travel, Miscellaneous, Other
+  customCategory    String?       // Used when category == "Other"
+  description       String
+  amount            Float
+  paymentMethod     String        // Cash, Bank Transfer, UPI, Cheque, Other
+  referenceNumber   String?
+  receiptUrl        String?
+  relatedPropertyId String?
+  relatedProperty   Property?     @relation(fields: [relatedPropertyId], references: [id])
+  relatedEmployeeId String?
+  relatedEmployee   Employee?     @relation(fields: [relatedEmployeeId], references: [id])
+  relatedLeadId     String?
+  relatedLead       CustomerLead? @relation(fields: [relatedLeadId], references: [id])
+  createdById       String
+  createdBy         User          @relation("CreatedTransactions", fields: [createdById], references: [id])
+  approvedById      String?
+  approvedBy        User?         @relation("ApprovedTransactions", fields: [approvedById], references: [id])
+  status            String        @default("Approved") // Pending, Approved, Reversed, Cancelled
+  reversalReason    String?
+  reversedAt        DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([date])
+  @@index([type])
+  @@index([category])
+  @@index([status])
+}
+
+model ExcelReportJob {
+  id             String   @id @default(cuid())
+  reportType     String   // DAILY_UPDATES, ATTENDANCE_MONTHLY, FINANCIAL_LEDGER, PROPERTIES, LEADS, CLIENT_VISITS, COMBINED_MONTHLY
+  dateRangeStart String
+  dateRangeEnd   String
+  fileName       String
+  filePath       String
+  generatedById  String
+  status         String   @default("Completed") // Completed, Failed
+  errorMessage   String?
+  createdAt      DateTime @default(now())
+
+  @@index([reportType])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  action     String   // CREATE, UPDATE, DELETE, LOGIN, LOGOUT, REVERSE, EXPORT, BACKUP, RESTORE
+  entityName String   // Employee, Attendance, DailyUpdate, Transaction, Property, Lead, ClientForm
+  entityId   String?
+  details    String?  // JSON diff or description
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityName])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model SystemNotification {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO, WARNING, ALERT, SUCCESS
+  isRead    Boolean  @default(false)
+  linkUrl   String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+}
+
+model BackupRecord {
+  id                 String    @id @default(cuid())
+  fileName           String
+  fileSize           Int
+  status             String    // Success, Failed
+  triggeredBy        String    @default("Manual") // Manual, Scheduled
+  verificationStatus String    @default("Pending") // Verified, Failed, Pending
+  verifiedAt         DateTime?
+  notes              String?
+  createdAt          DateTime  @default(now())
+
+  @@index([status])
+}
+
+model SystemSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}
